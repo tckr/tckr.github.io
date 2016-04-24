@@ -10,7 +10,7 @@ gems: [jekyll-paginate]
 # Setup
 title:               Tucker
 tagline:             'Trying out Jekyll'
-description:         'A reserved <a href="http://jekyllrb.com" target="_blank">Jekyll</a> theme that places the utmost gravity on content with a hidden drawer. Made by <a href="https://twitter.com/mdo" target="_blank">@mdo</a>.'
+description:         'A Jekyll site by <a href="https://twitter.com/tckr" target="_blank">@tckr</a> built on Lanyon.'
 url:                 http://tckr.github.io
 baseurl:             ''
 paginate:            5
