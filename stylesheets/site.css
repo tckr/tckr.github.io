@@ -10,8 +10,8 @@ body {
 
 a {
   color: rgba(255, 255, 255, 0.7); }
-  a:focus, a:hover {
-    color: rgba(0, 0, 0, 0.6); }
+  a:focus, 
+  a:hover {color: rgba(15, 234, 220, 0.8); }
 
 .middleman-logo {
   margin-bottom: 1rem;
