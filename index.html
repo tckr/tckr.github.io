@@ -164,7 +164,7 @@
     // The paper starts blank. "Random" draws a scene on it, taking turns between kinds
     // and different each time: a mountain landscape along the bottom of the window (a
     // sun, three ranges from far to near, green foothills), then three tiled floors:
-    // chevron, basketweave and stepped diamonds.
+    // chevron, basketweave and stepped diamonds; then a map of the world.
     // A scene is worked out from a seed and the window's size, so it always fills the
     // window and survives a resize.
     const BLUE = 0, SKY = 1, INDIGO = 2, PURPLE = 3, GREY = 5, SLATE = 6, SAGE = 7, GOLD = 8;
@@ -290,14 +290,55 @@
       }
       return m;
     }
-    // Every kind of scene takes a seed; the floors are fixed designs and ignore it.
+    // A map of the world filling the whole window: land in green, sea in blue. The
+    // outline is stored as a grid 256 squares wide and 128 tall, pole to pole, each row
+    // run-length encoded ("12.3x" is twelve squares of sea then three of land). From
+    // Natural Earth, which is in the public domain.
+    const WORLD_W = 256, WORLD_H = 128;
+    const WORLD = '256./256./256./256./100.10x146./63.21x.5x.22x143./60.59x23.x.x17.2x30.4x58./53.x6.6x.10x3.35x21.11x47.5x.x55./48.x4.4x.3x.12x2.38x23.4x2.2x54.4x53./41.6x3.x4.3x.2x.x2.7x6.37x24.x32.4x22.10x48./45.8x4.x2.x.9x15.28x54.5x17.19x17.5x2.2x21./39.7x6.x3.3x.3x2.x3.x.2x15.25x54.2x17.22x.3x4.2x10.2x26./39.14x2.4x.x3.10x15.23x53.3x9.3x.x.37x7.7x22./x13.5x21.2x2.10x5.3x2.14x12.23x32.4x16.3x8.3x.61x15./12.17x3.11x2.11x2.5x4.4x.8x9.22x30.11x19.3x2.72x.6x./2x8.37x4.4x3.x.5x2.3x3.x.7x8.18x31.17x4.x3.16x.75x/6x5.59x3.x2.8x6.14x34.19x2.97x/.6x2.32x.26x5.7x2.x7.11x10.7x18.8x2.7x3.100x/13.52x.5x2.x2.6x9.8x14.4x18.8x.111x./11.52x10.x.x2.4x10.6x34.9x2.112x./10.51x11.6x15.5x33.9x3.7x.89x.2x.7x5./9.x.8x.2x4.35x12.6x17.x35.9x3.94x4.5x9./14.x.3x11.32x11.10x41.x7.2x2.4x5.83x13.2x13./15.2x.x14.32x8.11x40.2x8.2x.3x3.84x12.5x12./12.3x19.35x4.12x39.3x7.x.2x5.82x13.5x13./35.35x2.16x33.3x2.2x6.71x.20x.x11.3x14./36.22x.11x2.17x32.2x2.4x2.99x9.2x15./37.51x36.5x.98x.x9.x16./37.44x.3x2.x40.100x.2x25./39.x.24x.16x4.4x35.103x.x26./40.25x3.14x7.2x35.101x2.x26./40.29x.15x42.22x2.3x.7x3.61x30./40.29x.10x.2x44.10x2.10x6.6x3.61x3.3x25./39.39x43.9x2.x3.2x2.8x9.5x3.58x4.4x25./39.39x44.8x7.3x2.6x2.5x2.6x4.53x7.2x27./40.36x45.7x6.x4.2x.2x3.16x3.47x2.4x8.2x27./40.35x46.7x11.x3.2x2.16x3.46x5.2x8.2x27./41.33x48.5x5.3x2.2x4.2x2.17x2.49x3.2x6.2x28./42.32x49.2x2.9x15.x.61x4.2x3.5x28./42.31x50.13x15.x.60x5.x2.6x29./44.28x50.16x5.x9.61x6.3x33./45.25x51.18x3.5x2.x2.63x5.x35./45.2x.22x51.94x41./48.12x9.2x49.42x2.51x41./46.2x.10x10.2x48.33x.10x2.49x42./48.x.9x11.x47.34x2.10x5.44x43./48.x2.8x58.36x.11x2.x8.36x2.x41./49.x2.7x10.2x45.37x2.15x7.34x2.x42./53.6x6.x4.3x43.38x2.14x7.15x.15x48./53.6x4.3x7.2x41.39x.13x11.10x4.10x2.x49./54.6x3.3x10.3x37.39x2.12x11.8x7.8x2.2x49./56.9x8.x42.40x2.10x12.7x8.9x9.2x41./58.7x2.x48.40x2.7x15.6x9.x.8x8.2x41./62.7x47.41x.6x17.4x12.9x8.x41./64.5x47.42x.3x19.4x13.8x8.2x40./66.3x7.2x38.43x22.4x13.x2.5x8.x41./67.2x5.7x.x34.47x18.3x13.x3.3x10.2x39./68.5x.11x33.46x18.2x.x12.x3.x14.x38./70.x.14x33.45x20.2x12.2x15.3x38./73.14x33.43x22.x13.2x10.x4.2x38./73.18x30.6x5.30x34.2x.3x7.4x43./73.19x43.27x35.2x.2x7.3x44./72.20x43.26x37.4x5.5x44./71.21x42.25x39.3x4.7x4.x.2x36./71.24x39.17x.6x41.3x4.6x.x7.2x33./70.26x39.22x43.3x3.5x2.2x7.2x.2x29./71.30x35.21x44.3x4.2x3.2x4.2x.9x25./70.33x33.20x46.2x9.x.x9.7x4.x19./71.32x34.19x47.2x21.7x.x3.x17./71.32x34.19x48.6x16.7x23./72.31x34.19x55.x.2x.2x10.2x2.2x22./72.30x35.20x77.x21./73.28x36.20x64.4x4.x26./73.28x36.20x5.2x56.5x3.2x26./74.27x35.21x5.2x53.8x3.3x25./75.25x36.20x4.4x52.10x2.4x23.x/77.23x36.19x4.4x52.17x22.x./78.22x37.17x5.4x51.18x24./78.21x38.16x6.4x48.23x22./78.21x39.15x6.3x48.24x12.x9./78.20x40.15x6.3x47.26x21./78.17x43.15x6.3x47.27x20./77.17x44.13x58.28x19./77.17x45.12x58.28x19./77.16x47.11x58.28x19./77.15x48.10x60.27x19./77.14x50.8x61.27x19./77.14x50.7x62.7x7.12x20./77.13x51.2x67.3x11.x.10x20./76.12x139.8x16.x4./76.11x140.8x17.x3./76.10x143.x.x20.3x./75.9x168.2x2./75.7x149.3x16.2x4./75.8x148.2x16.2x5./75.7x165.3x6./75.5x166.3x7./75.6x175./74.7x175./74.6x97.x78./74.5x6.2x169./75.4x177./76.5x175./78.2x176./256./256./256./256./256./84.x.x169./82.2x172./80.3x80.6x20.3x7.13x2.18x24./80.2x76.19x7.50x22./77.6x57.2x8.27x4.60x15./75.9x39.x2.x2.48x2.70x7./56.3x16.4x.5x34.130x7./44.x.x8.30x32.131x8./24.58x32.131x11./22.56x29.138x11./12.x3.59x18.3x7.143x10./13.x4.55x19.5x6.141x12./17.3x2.57x2.4x5.5x7.140x14./19.67x3.156x11./6.x12.231x6./21x3.232x/256x/256x/256x';
+    let worldRows = null;
+    function worldMap() {
+      if (!worldRows) worldRows = WORLD.split('/').map((row) => row.replace(/(\d*)([.x])/g, (_, n, k) => k.repeat(n ? +n : 1)));
+      const m = new Map();
+      const c0 = Math.floor(-(vw / 2) / SIZE), c1 = Math.ceil((vw / 2) / SIZE) - 1;
+      const r0 = Math.floor(-(vh / 2) / SIZE), r1 = Math.ceil((vh / 2) / SIZE) - 1;
+      const cols = c1 - c0 + 1, rows = r1 - r0 + 1;
+      // Squares per degree each way. The map is stretched to the window's shape, but by no
+      // more than 1.3 times; past that it keeps its shape and the overflow is cropped,
+      // so a tall phone screen shows the middle of the map (Europe and Africa).
+      let sx = cols / 360, sy = rows / 180;
+      if (sy > sx * 1.3) sx = sy / 1.3;
+      if (sx > sy * 1.3) sy = sx / 1.3;
+      const CENTRE_LON = 10;
+      const landAt = (lon, lat) => {
+        const x = Math.floor(((((lon + 180) % 360) + 360) % 360) / 360 * WORLD_W);
+        const y = Math.min(WORLD_H - 1, Math.max(0, Math.floor((90 - lat) / 180 * WORLD_H)));
+        return worldRows[y][x] === 'x';
+      };
+      for (let j = 0; j < rows; j++) {
+        for (let i = 0; i < cols; i++) {
+          // Land if most of a 3 by 3 spread of points inside the square are on land.
+          let land = 0;
+          for (let a = 1; a <= 5; a += 2) {
+            for (let b = 1; b <= 5; b += 2) {
+              const lon = CENTRE_LON + (i + a / 6 - cols / 2) / sx, lat = -(j + b / 6 - rows / 2) / sy;
+              if (lat <= 90 && lat >= -90 && landAt(lon, lat)) land++;
+            }
+          }
+          m.set(`${c0 + i},${r0 + j}`, land >= 5 ? SAGE : BLUE);
+        }
+      }
+      return m;
+    }
+    // Every kind of scene takes a seed; the floors and maps are fixed designs and ignore it.
     const SCENES = {
       mountains: landscape,
       chevron: () => tiledFloor('chevron'),
       basketweave: () => tiledFloor('basketweave'),
       diamonds: () => tiledFloor('diamonds'),
+      world: worldMap,
     };
-    const SCENE_ORDER = ['mountains', 'chevron', 'basketweave', 'diamonds'];
+    const SCENE_ORDER = ['mountains', 'chevron', 'basketweave', 'diamonds', 'world'];
 
     // What is remembered: which scene was generated (its kind and seed, or none for blank paper)
     // and the visitor's own changes on top of it, square -> colour, or -1 for rubbed out.
