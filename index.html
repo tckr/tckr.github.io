@@ -80,12 +80,19 @@
       height: 100%;
       pointer-events: none;
     }
+    /* The name sits in the open sky; the mountains are drawn in tiles along the bottom. */
     main {
-      position: relative;
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 26%;
+      padding: 0 24px;
       text-align: center;
+      pointer-events: none;
       user-select: none;
       -webkit-user-select: none;
     }
+    main a { pointer-events: auto; }
     h1 {
       margin: 0 0 12px;
       font-size: clamp(1.5rem, 5.6vw, 2.75rem);
@@ -104,7 +111,7 @@
     .tools {
       position: fixed;
       right: max(12px, env(safe-area-inset-right, 0px));
-      bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      top: max(12px, env(safe-area-inset-top, 0px));   /* clear of the mountains along the bottom */
       display: flex;
       gap: 4px;
     }
@@ -132,6 +139,7 @@
   </main>
   <div class="tools">
     <button type="button" id="reset">Reset</button>
+    <button type="button" id="random">Random</button>
     <button type="button" id="theme">Theme: system</button>
   </div>
   <script>
@@ -142,38 +150,120 @@
 
     // Dot grid paper. Click a square to colour it, or drag to colour a run; each further click moves it to
     // the next colour in the sequence, and after the last one it goes back to blank.
-    const SIZE = 18;   // px per square
-    const GAP = 2;     // px of paper left around a coloured square
-    const COLORS = ['#6a94e6', '#7cc4ee', '#5b62c9', '#9d82dc', '#cf8fcb', '#a3a9bb', '#565d7e'];
-    //              blue       sky        indigo     purple     mauve      grey       slate
-    const STORE = 'paper-cells-v2';
+    let SIZE = 18;     // px per square; smaller on narrow screens
+    let GAP = 2;       // px of paper left around a coloured square
+    const COLORS = ['#6a94e6', '#7cc4ee', '#5b62c9', '#9d82dc', '#cf8fcb', '#a3a9bb', '#565d7e', '#74a88f', '#e0b964'];
+    //              blue       sky        indigo     purple     mauve      grey       slate      sage       gold
+    const STORE = 'paper-v5';
 
     // Squares are counted from the centre of the window, so a drawing stays put
     // around the name when the window is resized. Key "col,row" -> index into COLORS.
-    let cells = new Map();
-    try {
-      const saved = localStorage.getItem(STORE);
-      if (saved) {
-        cells = new Map(Object.entries(JSON.parse(saved)));
-      } else {
-        // Drawings from when there were three colours: keep each square the colour it was.
-        const old = { 0: 0, 1: 3, 2: 5 };
-        const v1 = JSON.parse(localStorage.getItem('paper-cells-v1') || '{}');
-        cells = new Map(Object.entries(v1).filter(([, c]) => c in old).map(([k, c]) => [k, old[c]]));
+    // The paper starts blank. "Random" draws a scene on it: for now always a mountain
+    // landscape along the bottom of the window (a sun, three ranges from far to near,
+    // green foothills), different each time. A scene is worked out from a seed and the
+    // window's size, so it always spans the full width and survives a resize.
+    const BLUE = 0, SKY = 1, PURPLE = 3, GREY = 5, SAGE = 7, GOLD = 8;
+    const RANGES = [
+      // colour, floor height, snow?, peaks as [across 0..1, height, left steepness, right steepness]
+      { c: GREY,   floor: 0.10, snow: true,  peaks: [[0.10, 0.24, 1.3, 0.8], [0.31, 0.36, 1.0, 1.4], [0.53, 0.29, 0.9, 1.1], [0.77, 0.40, 1.5, 1.0], [0.96, 0.25, 1.0, 1.2]] },
+      { c: PURPLE, floor: 0.08, snow: false, peaks: [[0.02, 0.19, 0.8, 0.7], [0.22, 0.23, 0.8, 1.0], [0.44, 0.19, 0.6, 0.8], [0.65, 0.25, 1.0, 0.7], [0.89, 0.21, 0.7, 0.9]] },
+      { c: BLUE,   floor: 0.06, snow: false, peaks: [[0.14, 0.12, 0.5, 0.6], [0.39, 0.15, 0.6, 0.5], [0.61, 0.11, 0.5, 0.5], [0.85, 0.15, 0.5, 0.6]] },
+    ];
+    // Height of one range at column i: the tallest of its peaks there, each with its own
+    // slope on either side. Slopes get rougher away from a summit, so summits stay sharp.
+    // A small seeded random number generator, so one seed always gives the same scene.
+    const rng = (seed) => () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    // Height of one range at column i: the tallest of its peaks there, each with its own
+    // slope on either side. Slopes get rougher away from a summit, so summits stay sharp.
+    function ridge(range, i, cols, unit) {
+      let h = range.floor * unit, top = 0, away = 99;
+      for (const [across, height, left, right] of range.peaks) {
+        const dx = i + 0.5 - across * cols;
+        const v = height * unit - (dx < 0 ? -dx * left : dx * right);
+        if (v > h) { h = v; top = height * unit; away = Math.abs(dx); }
       }
+      const rough = Math.sin(i * 1.7 + range.phase) * 0.5 + Math.sin(i * 0.53 + range.phase * 0.6) * 0.8;
+      return { h: h + rough * Math.min(1, away / 5), top };
+    }
+    function landscape(seed) {
+      const rand = rng(seed);
+      const vary = (v, by) => v * (1 - by + rand() * by * 2);
+      // Each scene nudges every peak sideways, taller or shorter, and steeper or gentler.
+      const ranges = RANGES.map((range) => ({
+        ...range,
+        phase: rand() * 6.28,
+        peaks: range.peaks.map(([across, height, left, right]) =>
+          [across + (rand() - 0.5) * 0.12, vary(height, 0.22), vary(left, 0.25), vary(right, 0.25)]),
+      }));
+      const sunAcross = 0.18 + rand() * 0.64, hillA = rand() * 6.28, hillB = rand() * 6.28;
+
+      const m = new Map();
+      const c0 = Math.floor(-(vw / 2) / SIZE), c1 = Math.ceil((vw / 2) / SIZE) - 1;
+      const bottom = Math.ceil((vh / 2) / SIZE) - 1;          // lowest row on screen
+      const cols = c1 - c0 + 1, rows = Math.ceil(vh / SIZE);
+      // Heights follow the window's width, but on a tall narrow screen they grow so the range still has presence.
+      const unit = Math.min(rows, Math.max(cols * 0.62, rows * 0.55));
+      const put = (i, level, colour) => m.set(`${c0 + i},${bottom - level + 1}`, colour);
+
+      // A gold sun in open sky, clear above whichever range is tallest beneath it.
+      const sr = Math.max(3, unit * 0.09);
+      const sx = Math.round(sunAcross * cols) + 0.5;
+      const sy = Math.max(...ranges.map((range) => ridge(range, Math.floor(sx), cols, unit).h)) + sr * 1.7;
+      for (let i = Math.floor(sx - sr); i <= sx + sr; i++) {
+        for (let level = Math.floor(sy - sr); level <= sy + sr + 1; level++) {
+          if (i >= 0 && i < cols && level >= 1 && Math.hypot(i + 0.5 - sx, level - 0.5 - sy) <= sr) put(i, level, GOLD);
+        }
+      }
+      for (const range of ranges) {
+        for (let i = 0; i < cols; i++) {
+          const { h, top } = ridge(range, i, cols, unit);
+          // Snow covers the top fifth of the big peaks, with a ragged lower edge.
+          const snowLine = top - Math.max(2, top * 0.22) + (i % 2 ? 0 : 1);
+          for (let level = 1; level <= Math.round(h); level++) {
+            put(i, level, range.snow && top > 0.27 * unit && level > snowLine ? SKY : range.c);
+          }
+        }
+      }
+      // Rolling green foothills in front.
+      for (let i = 0; i < cols; i++) {
+        const u = i / cols;
+        const h = unit * (0.055 + 0.025 * Math.sin(u * 9 + hillA) + 0.015 * Math.sin(u * 23 + hillB));
+        for (let level = 1; level <= Math.round(h); level++) put(i, level, SAGE);
+      }
+      return m;
+    }
+
+    // What is remembered: which scene was generated (its seed, or none for blank paper)
+    // and the visitor's own changes on top of it, square -> colour, or -1 for rubbed out.
+    let cells = new Map();
+    let scene = null;
+    let edits = new Map();
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (saved) { scene = saved.scene ?? null; edits = new Map(Object.entries(saved.edits || {})); }
     } catch {}
+    const compose = () => {
+      cells = scene === null ? new Map() : landscape(scene);
+      for (const [key, c] of edits) { if (c < 0) cells.delete(key); else cells.set(key, c); }
+    };
     const save = () => {
-      try { localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(cells))); } catch {}
+      try { localStorage.setItem(STORE, JSON.stringify({ scene, edits: Object.fromEntries(edits) })); } catch {}
     };
 
     let vw = 0, vh = 0, dpr = 1, hover = null;
     let dotColor = '', hoverColor = '';
-    const cellAt = (x, y) => [Math.floor((x - vw / 2) / SIZE), Math.floor((y - vh / 2) / SIZE)];
+    const originX = () => vw / 2;
+    const cellAt = (x, y) => [Math.floor((x - originX()) / SIZE), Math.floor((y - vh / 2) / SIZE)];
 
     function draw() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const ox = vw / 2, oy = vh / 2;
+      const ox = originX(), oy = vh / 2;
       // Snap to device pixels so dots and squares stay crisp.
       const px = (v) => Math.round(v * dpr);
 
@@ -182,7 +272,7 @@
         const x0 = px(ox + col * SIZE + GAP), y0 = px(oy + row * SIZE + GAP);
         const x1 = px(ox + (col + 1) * SIZE - GAP) + 1, y1 = px(oy + (row + 1) * SIZE - GAP) + 1;
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 1.5 * dpr); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
+        if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, (SIZE / 12) * dpr); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
         ctx.fill();
       };
       for (const [key, c] of cells) {
@@ -197,7 +287,7 @@
 
       // A dot at every corner where grid lines would cross.
       ctx.fillStyle = dotColor;
-      const r = Math.max(1, 1.1 * dpr);
+      const r = Math.max(1, (SIZE < 12 ? 0.8 : 1.1) * dpr);
       ctx.beginPath();
       for (let j = Math.floor(-oy / SIZE); oy + j * SIZE <= vh; j++) {
         for (let k = Math.floor(-ox / SIZE); ox + k * SIZE <= vw; k++) {
@@ -211,6 +301,9 @@
 
     function resize() {
       vw = innerWidth; vh = innerHeight;
+      SIZE = vw < 600 ? 12 : 18;
+      GAP = SIZE >= 14 ? 2 : 1;
+      compose();
       dpr = Math.min(3, devicePixelRatio || 1);
       canvas.width = Math.round(vw * dpr);
       canvas.height = Math.round(vh * dpr);
@@ -242,8 +335,22 @@
     });
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
-    const changed = () => { resetBtn.disabled = cells.size === 0; };
-    resetBtn.addEventListener('click', () => { cells.clear(); save(); changed(); draw(); });
+    const changed = () => { resetBtn.disabled = scene === null && edits.size === 0; };
+    resetBtn.addEventListener('click', () => {
+      scene = null;
+      edits.clear();
+      try { localStorage.removeItem(STORE); } catch {}
+      compose();
+      changed(); draw();
+    });
+    // Random replaces whatever is on the paper with a freshly generated scene.
+    document.getElementById('random').addEventListener('click', () => {
+      scene = (Math.random() * 4294967296) >>> 0;
+      edits.clear();
+      save();
+      compose();
+      changed(); draw();
+    });
 
     resize();
     applyTheme();
@@ -255,8 +362,10 @@
     // this stroke already painted, is bumped to the next colour in the sequence.
     const bump = (key) => {
       const next = cells.has(key) ? cells.get(key) + 1 : 0;
-      if (next >= COLORS.length) cells.delete(key); else cells.set(key, next);
-      return next >= COLORS.length ? -1 : next;
+      const value = next >= COLORS.length ? -1 : next;
+      if (value < 0) cells.delete(key); else cells.set(key, value);
+      edits.set(key, value);
+      return value;
     };
     let brush = null, curKey = '', lastX = 0, lastY = 0;
     addEventListener('pointerdown', (e) => {
@@ -278,7 +387,7 @@
           if (key === curKey) continue;   // still inside the same square
           curKey = key;
           if (cells.has(key)) bump(key);
-          else if (brush >= 0) cells.set(key, brush);
+          else if (brush >= 0) { cells.set(key, brush); edits.set(key, brush); }
           else continue;
           dirty = true;
         }
