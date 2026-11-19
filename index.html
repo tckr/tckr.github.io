@@ -21,25 +21,38 @@
   <style>
     :root {
       color-scheme: light;
-      --bg: #f6f8fb; --bg-centre: #f9fafc; --bg-edge: #eef1f7;
+      --bg: #f6f8fb;
       --fg: #1d1f2b; --muted: #5a5f78;
-      --dot: rgba(52, 66, 120, 0.26);
+      --dot: rgba(52, 66, 120, 0.13);
+      /* Tuned in the Paper Gradient Lab: a blue glow right of centre, purple on the left, grey along the top. */
+      --glow:
+        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.303) 6%, rgba(127, 168, 245, 0.256) 29.5%, rgba(127, 168, 245, 0.152) 53%, rgba(127, 168, 245, 0.047) 76.5%, rgba(127, 168, 245, 0) 100%),
+        radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.178) 0%, rgba(166, 139, 232, 0.15) 25%, rgba(166, 139, 232, 0.089) 50%, rgba(166, 139, 232, 0.028) 75%, rgba(166, 139, 232, 0) 100%),
+        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.207) 0%, rgba(154, 163, 184, 0.175) 25%, rgba(154, 163, 184, 0.104) 50%, rgba(154, 163, 184, 0.032) 75%, rgba(154, 163, 184, 0) 100%);
       --hover: rgba(40, 50, 95, 0.07);
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
         color-scheme: dark;
-        --bg: #14161f; --bg-centre: #181b26; --bg-edge: #0e1017;
+        --bg: #14161f;
         --fg: #e8eaf2; --muted: #9aa1b8;
-        --dot: rgba(160, 176, 230, 0.24);
+        --dot: rgba(160, 176, 230, 0.15);
+        --glow:
+        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.137) 6%, rgba(127, 168, 245, 0.115) 29.5%, rgba(127, 168, 245, 0.068) 53%, rgba(127, 168, 245, 0.021) 76.5%, rgba(127, 168, 245, 0) 100%),
+        radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.08) 0%, rgba(166, 139, 232, 0.067) 25%, rgba(166, 139, 232, 0.04) 50%, rgba(166, 139, 232, 0.012) 75%, rgba(166, 139, 232, 0) 100%),
+        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.093) 0%, rgba(154, 163, 184, 0.079) 25%, rgba(154, 163, 184, 0.047) 50%, rgba(154, 163, 184, 0.015) 75%, rgba(154, 163, 184, 0) 100%);
         --hover: rgba(255, 255, 255, 0.07);
       }
     }
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #14161f; --bg-centre: #181b26; --bg-edge: #0e1017;
+      --bg: #14161f;
       --fg: #e8eaf2; --muted: #9aa1b8;
-      --dot: rgba(160, 176, 230, 0.24);
+      --dot: rgba(160, 176, 230, 0.15);
+      --glow:
+        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.137) 6%, rgba(127, 168, 245, 0.115) 29.5%, rgba(127, 168, 245, 0.068) 53%, rgba(127, 168, 245, 0.021) 76.5%, rgba(127, 168, 245, 0) 100%),
+      radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.08) 0%, rgba(166, 139, 232, 0.067) 25%, rgba(166, 139, 232, 0.04) 50%, rgba(166, 139, 232, 0.012) 75%, rgba(166, 139, 232, 0) 100%),
+      radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.093) 0%, rgba(154, 163, 184, 0.079) 25%, rgba(154, 163, 184, 0.047) 50%, rgba(154, 163, 184, 0.015) 75%, rgba(154, 163, 184, 0) 100%);
       --hover: rgba(255, 255, 255, 0.07);
     }
     * { box-sizing: border-box; }
@@ -49,9 +62,9 @@
       place-items: center;
       padding: 24px;
       overflow: hidden;
-      /* Paper with the faintest blue tint, a touch deeper towards the edges. */
-      background: radial-gradient(120% 120% at 50% 46%, var(--bg-centre) 0%, var(--bg) 55%, var(--bg-edge) 100%) fixed;
-      background-color: var(--bg);
+      /* Paper with soft glows of blue, purple and grey laid over it. */
+      background: var(--glow), var(--bg);
+      background-attachment: fixed;
       color: var(--fg);
       font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       -webkit-font-smoothing: antialiased;
@@ -129,8 +142,8 @@
 
     // Dot grid paper. Click a square to colour it, or drag to colour a run; each further click moves it to
     // the next colour in the sequence, and after the last one it goes back to blank.
-    const SIZE = 32;   // px per square
-    const GAP = 4;     // px of paper left around a coloured square
+    const SIZE = 15;   // px per square
+    const GAP = 2;     // px of paper left around a coloured square
     const COLORS = ['#6a94e6', '#7cc4ee', '#5b62c9', '#9d82dc', '#cf8fcb', '#a3a9bb', '#565d7e'];
     //              blue       sky        indigo     purple     mauve      grey       slate
     const STORE = 'paper-cells-v2';
@@ -169,7 +182,7 @@
         const x0 = px(ox + col * SIZE + GAP), y0 = px(oy + row * SIZE + GAP);
         const x1 = px(ox + (col + 1) * SIZE - GAP) + 1, y1 = px(oy + (row + 1) * SIZE - GAP) + 1;
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 3 * dpr); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
+        if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 1.5 * dpr); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
         ctx.fill();
       };
       for (const [key, c] of cells) {
