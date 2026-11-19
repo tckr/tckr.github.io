@@ -23,12 +23,12 @@
       color-scheme: light;
       --bg: #f6f8fb;
       --fg: #1d1f2b; --muted: #5a5f78;
-      --dot: rgba(52, 66, 120, 0.13);
-      /* Tuned in the Paper Gradient Lab: a blue glow right of centre, purple on the left, grey along the top. */
+      --dot: rgba(52, 66, 120, 0.15);
+      /* Tuned in the Paper Gradient Lab: a blue glow in the bottom right, a trace of purple on the left and of grey along the top. */
       --glow:
-        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.303) 6%, rgba(127, 168, 245, 0.256) 29.5%, rgba(127, 168, 245, 0.152) 53%, rgba(127, 168, 245, 0.047) 76.5%, rgba(127, 168, 245, 0) 100%),
-        radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.178) 0%, rgba(166, 139, 232, 0.15) 25%, rgba(166, 139, 232, 0.089) 50%, rgba(166, 139, 232, 0.028) 75%, rgba(166, 139, 232, 0) 100%),
-        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.207) 0%, rgba(154, 163, 184, 0.175) 25%, rgba(154, 163, 184, 0.104) 50%, rgba(154, 163, 184, 0.032) 75%, rgba(154, 163, 184, 0) 100%);
+        radial-gradient(ellipse 75% 75% at 88% 86%, rgba(127, 168, 245, 0.125) 0%, rgba(127, 168, 245, 0.105) 25%, rgba(127, 168, 245, 0.062) 50%, rgba(127, 168, 245, 0.02) 75%, rgba(127, 168, 245, 0) 100%),
+        radial-gradient(ellipse 60% 60% at 8% 62%, rgba(166, 139, 232, 0.05) 0%, rgba(166, 139, 232, 0.042) 25%, rgba(166, 139, 232, 0.025) 50%, rgba(166, 139, 232, 0.008) 75%, rgba(166, 139, 232, 0) 100%),
+        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.05) 0%, rgba(154, 163, 184, 0.042) 25%, rgba(154, 163, 184, 0.025) 50%, rgba(154, 163, 184, 0.008) 75%, rgba(154, 163, 184, 0) 100%);
       --hover: rgba(40, 50, 95, 0.07);
     }
     @media (prefers-color-scheme: dark) {
@@ -36,11 +36,11 @@
         color-scheme: dark;
         --bg: #14161f;
         --fg: #e8eaf2; --muted: #9aa1b8;
-        --dot: rgba(160, 176, 230, 0.15);
+        --dot: rgba(160, 176, 230, 0.17);
         --glow:
-        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.137) 6%, rgba(127, 168, 245, 0.115) 29.5%, rgba(127, 168, 245, 0.068) 53%, rgba(127, 168, 245, 0.021) 76.5%, rgba(127, 168, 245, 0) 100%),
-        radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.08) 0%, rgba(166, 139, 232, 0.067) 25%, rgba(166, 139, 232, 0.04) 50%, rgba(166, 139, 232, 0.012) 75%, rgba(166, 139, 232, 0) 100%),
-        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.093) 0%, rgba(154, 163, 184, 0.079) 25%, rgba(154, 163, 184, 0.047) 50%, rgba(154, 163, 184, 0.015) 75%, rgba(154, 163, 184, 0) 100%);
+        radial-gradient(ellipse 75% 75% at 88% 86%, rgba(127, 168, 245, 0.056) 0%, rgba(127, 168, 245, 0.047) 25%, rgba(127, 168, 245, 0.028) 50%, rgba(127, 168, 245, 0.009) 75%, rgba(127, 168, 245, 0) 100%),
+        radial-gradient(ellipse 60% 60% at 8% 62%, rgba(166, 139, 232, 0.023) 0%, rgba(166, 139, 232, 0.019) 25%, rgba(166, 139, 232, 0.011) 50%, rgba(166, 139, 232, 0.004) 75%, rgba(166, 139, 232, 0) 100%),
+        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.023) 0%, rgba(154, 163, 184, 0.019) 25%, rgba(154, 163, 184, 0.011) 50%, rgba(154, 163, 184, 0.004) 75%, rgba(154, 163, 184, 0) 100%);
         --hover: rgba(255, 255, 255, 0.07);
       }
     }
@@ -48,11 +48,11 @@
       color-scheme: dark;
       --bg: #14161f;
       --fg: #e8eaf2; --muted: #9aa1b8;
-      --dot: rgba(160, 176, 230, 0.15);
+      --dot: rgba(160, 176, 230, 0.17);
       --glow:
-        radial-gradient(ellipse 89.7% 69% at 62% 57%, rgba(127, 168, 245, 0.137) 6%, rgba(127, 168, 245, 0.115) 29.5%, rgba(127, 168, 245, 0.068) 53%, rgba(127, 168, 245, 0.021) 76.5%, rgba(127, 168, 245, 0) 100%),
-      radial-gradient(ellipse 60% 60% at 20% 56%, rgba(166, 139, 232, 0.08) 0%, rgba(166, 139, 232, 0.067) 25%, rgba(166, 139, 232, 0.04) 50%, rgba(166, 139, 232, 0.012) 75%, rgba(166, 139, 232, 0) 100%),
-      radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.093) 0%, rgba(154, 163, 184, 0.079) 25%, rgba(154, 163, 184, 0.047) 50%, rgba(154, 163, 184, 0.015) 75%, rgba(154, 163, 184, 0) 100%);
+        radial-gradient(ellipse 75% 75% at 88% 86%, rgba(127, 168, 245, 0.056) 0%, rgba(127, 168, 245, 0.047) 25%, rgba(127, 168, 245, 0.028) 50%, rgba(127, 168, 245, 0.009) 75%, rgba(127, 168, 245, 0) 100%),
+        radial-gradient(ellipse 60% 60% at 8% 62%, rgba(166, 139, 232, 0.023) 0%, rgba(166, 139, 232, 0.019) 25%, rgba(166, 139, 232, 0.011) 50%, rgba(166, 139, 232, 0.004) 75%, rgba(166, 139, 232, 0) 100%),
+        radial-gradient(ellipse 70% 70% at 62% -5%, rgba(154, 163, 184, 0.023) 0%, rgba(154, 163, 184, 0.019) 25%, rgba(154, 163, 184, 0.011) 50%, rgba(154, 163, 184, 0.004) 75%, rgba(154, 163, 184, 0) 100%);
       --hover: rgba(255, 255, 255, 0.07);
     }
     * { box-sizing: border-box; }
@@ -142,7 +142,7 @@
 
     // Dot grid paper. Click a square to colour it, or drag to colour a run; each further click moves it to
     // the next colour in the sequence, and after the last one it goes back to blank.
-    const SIZE = 15;   // px per square
+    const SIZE = 18;   // px per square
     const GAP = 2;     // px of paper left around a coloured square
     const COLORS = ['#6a94e6', '#7cc4ee', '#5b62c9', '#9d82dc', '#cf8fcb', '#a3a9bb', '#565d7e'];
     //              blue       sky        indigo     purple     mauve      grey       slate
