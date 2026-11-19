@@ -80,12 +80,12 @@
       height: 100%;
       pointer-events: none;
     }
-    /* The name sits in the open sky; the mountains are drawn in tiles along the bottom. */
+    /* The name sits in the centre of the page; scenes are drawn in tiles around and behind it. */
     main {
       position: fixed;
       left: 50%;
-      top: 26%;
-      transform: translateX(-50%);
+      top: 50%;
+      transform: translate(-50%, -50%);
       width: max-content;
       max-width: calc(100% - 48px);
       text-align: center;
@@ -115,10 +115,21 @@
       right: max(12px, env(safe-area-inset-right, 0px));
       top: max(12px, env(safe-area-inset-top, 0px));   /* clear of the mountains along the bottom */
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
       gap: 4px;
+      max-width: calc(100% - 24px);
       background: var(--bg);   /* stays readable when a pattern covers the paper */
       border-radius: 8px;
     }
+    /* Only Reset and the three dots show until the dots are pressed; then the rest unfold beside them. */
+    .more { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+    .more[hidden] { display: none; }
+    .tools .icon { display: inline-flex; align-items: center; padding: 8px; }
+    .tools svg { display: block; pointer-events: none; }
+    #menu .close, #menu[aria-expanded="true"] .dots { display: none; }
+    #menu[aria-expanded="true"] .close { display: block; }
     .tools button {
       font: inherit;
       font-size: 0.8125rem;
@@ -142,10 +153,18 @@
     <a href="https://www.linkedin.com/in/tuckerseverson/" rel="me noopener">LinkedIn</a>
   </main>
   <div class="tools">
-    <button type="button" id="reset">Reset</button>
-    <button type="button" id="random">Random</button>
-    <button type="button" id="name" aria-pressed="true">Name: on</button>
-    <button type="button" id="theme">Theme: system</button>
+    <div class="more" id="more" hidden>
+      <button type="button" id="random">Random</button>
+      <button type="button" id="name" aria-pressed="true">Name: on</button>
+      <button type="button" id="theme">Theme: system</button>
+    </div>
+    <button type="button" class="icon" id="reset" aria-label="Reset" title="Reset">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.8-4.07"/><path d="M2.5 2.2v3.5H6"/></svg>
+    </button>
+    <button type="button" class="icon" id="menu" aria-label="Show all buttons" title="More" aria-expanded="false" aria-controls="more">
+      <svg class="dots" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg>
+      <svg class="close" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>
+    </button>
   </div>
   <script>
   (() => {
@@ -209,40 +228,57 @@
       }));
       const sunAcross = 0.18 + rand() * 0.64, hillA = rand() * 6.28, hillB = rand() * 6.28;
 
-      const m = new Map();
       const c0 = Math.floor(-(vw / 2) / SIZE), c1 = Math.ceil((vw / 2) / SIZE) - 1;
       const bottom = Math.ceil((vh / 2) / SIZE) - 1;          // lowest row on screen
       const cols = c1 - c0 + 1, rows = Math.ceil(vh / SIZE);
-      // Heights follow the window's width, but on a tall narrow screen they grow so the range still has presence.
-      const unit = Math.min(rows, Math.max(cols * 0.62, rows * 0.55));
-      const put = (i, level, colour) => m.set(`${c0 + i},${bottom - level + 1}`, colour);
+      // The columns the name stands over, and how many rows are free beneath it.
+      const nameEl = document.querySelector('main');
+      const box = nameEl.getBoundingClientRect();
+      const n0 = Math.floor((box.left - vw / 2) / SIZE) - 1, n1 = Math.floor((box.right - vw / 2) / SIZE) + 1;
+      const room = bottom - Math.floor((box.bottom - vh / 2) / SIZE) - 1;
 
-      // A gold sun in open sky, clear above whichever range is tallest beneath it.
-      const sr = Math.max(3, unit * 0.09);
-      const sx = Math.round(sunAcross * cols) + 0.5;
-      const sy = Math.max(...ranges.map((range) => ridge(range, Math.floor(sx), cols, unit).h)) + sr * 1.7;
-      for (let i = Math.floor(sx - sr); i <= sx + sr; i++) {
-        for (let level = Math.floor(sy - sr); level <= sy + sr + 1; level++) {
-          if (i >= 0 && i < cols && level >= 1 && Math.hypot(i + 0.5 - sx, level - 0.5 - sy) <= sr) put(i, level, GOLD);
-        }
-      }
-      for (const range of ranges) {
-        for (let i = 0; i < cols; i++) {
-          const { h, top } = ridge(range, i, cols, unit);
-          // Snow covers the top fifth of the big peaks, with a ragged lower edge.
-          const snowLine = top - Math.max(2, top * 0.22) + (i % 2 ? 0 : 1);
-          for (let level = 1; level <= Math.round(h); level++) {
-            put(i, level, range.snow && top > 0.27 * unit && level > snowLine ? SKY : range.c);
+      const paint = (unit) => {
+        const m = new Map();
+        let under = 0;                                        // tallest thing drawn beneath the name
+        const put = (i, level, colour) => {
+          m.set(`${c0 + i},${bottom - level + 1}`, colour);
+          if (level > under && c0 + i >= n0 && c0 + i <= n1) under = level;
+        };
+
+        // A gold sun in open sky, clear above whichever range is tallest beneath it.
+        const sr = Math.max(3, unit * 0.09);
+        const sx = Math.round(sunAcross * cols) + 0.5;
+        const sy = Math.max(...ranges.map((range) => ridge(range, Math.floor(sx), cols, unit).h)) + sr * 1.7;
+        for (let i = Math.floor(sx - sr); i <= sx + sr; i++) {
+          for (let level = Math.floor(sy - sr); level <= sy + sr + 1; level++) {
+            if (i >= 0 && i < cols && level >= 1 && Math.hypot(i + 0.5 - sx, level - 0.5 - sy) <= sr) put(i, level, GOLD);
           }
         }
-      }
-      // Rolling green foothills in front.
-      for (let i = 0; i < cols; i++) {
-        const u = i / cols;
-        const h = unit * (0.055 + 0.025 * Math.sin(u * 9 + hillA) + 0.015 * Math.sin(u * 23 + hillB));
-        for (let level = 1; level <= Math.round(h); level++) put(i, level, SAGE);
-      }
-      return m;
+        for (const range of ranges) {
+          for (let i = 0; i < cols; i++) {
+            const { h, top } = ridge(range, i, cols, unit);
+            // Snow covers the top fifth of the big peaks, with a ragged lower edge.
+            const snowLine = top - Math.max(2, top * 0.22) + (i % 2 ? 0 : 1);
+            for (let level = 1; level <= Math.round(h); level++) {
+              put(i, level, range.snow && top > 0.27 * unit && level > snowLine ? SKY : range.c);
+            }
+          }
+        }
+        // Rolling green foothills in front.
+        for (let i = 0; i < cols; i++) {
+          const u = i / cols;
+          const h = unit * (0.055 + 0.025 * Math.sin(u * 9 + hillA) + 0.015 * Math.sin(u * 23 + hillB));
+          for (let level = 1; level <= Math.round(h); level++) put(i, level, SAGE);
+        }
+        return { m, under };
+      };
+
+      // Heights follow the window's width, but on a tall narrow screen they grow so the range still has presence.
+      const unit = Math.min(rows, Math.max(cols * 0.62, rows * 0.55));
+      let scene = paint(unit);
+      // If a peak or the sun would reach the name, draw the whole scene smaller so it stops just short.
+      if (!nameEl.hidden && room > 4 && scene.under > room) scene = paint(unit * room / scene.under);
+      return scene.m;
     }
 
     // Tiled floors. Each answers one question: what colour is the square at column x,
@@ -461,6 +497,15 @@
       try { if (on) localStorage.removeItem('paper-name'); else localStorage.setItem('paper-name', 'off'); } catch {}
       compose();   // a floor's panel comes and goes with the name
       draw();
+    });
+
+    // The three dots unfold the rest of the buttons, and fold them away again.
+    const menuBtn = document.getElementById('menu'), more = document.getElementById('more');
+    menuBtn.addEventListener('click', () => {
+      const open = more.hidden;
+      more.hidden = !open;
+      menuBtn.setAttribute('aria-expanded', String(open));
+      menuBtn.setAttribute('aria-label', open ? 'Hide the extra buttons' : 'Show all buttons');
     });
 
     const changed = () => { resetBtn.disabled = scene === null && edits.size === 0; };
