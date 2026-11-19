@@ -93,6 +93,7 @@
       user-select: none;
       -webkit-user-select: none;
     }
+    main[hidden] { display: none; }
     main a { pointer-events: auto; }
     h1 {
       margin: 0 0 12px;
@@ -143,6 +144,7 @@
   <div class="tools">
     <button type="button" id="reset">Reset</button>
     <button type="button" id="random">Random</button>
+    <button type="button" id="name" aria-pressed="true">Name: on</button>
     <button type="button" id="theme">Theme: system</button>
   </div>
   <script>
@@ -274,13 +276,15 @@
       const c0 = Math.floor(-(vw / 2) / SIZE), c1 = Math.ceil((vw / 2) / SIZE) - 1;
       const r0 = Math.floor(-(vh / 2) / SIZE), r1 = Math.ceil((vh / 2) / SIZE) - 1;
       // The panel around the name: one blank square of margin, then a one-square border.
+      // With the name switched off there is no panel and the pattern runs unbroken.
+      const named = !document.querySelector('main').hidden;
       const box = document.querySelector('main').getBoundingClientRect();
       const pc0 = Math.floor((box.left - vw / 2) / SIZE) - 2, pc1 = Math.floor((box.right - vw / 2) / SIZE) + 2;
       const pr0 = Math.floor((box.top - vh / 2) / SIZE) - 2, pr1 = Math.floor((box.bottom - vh / 2) / SIZE) + 2;
       for (let row = r0; row <= r1; row++) {
         for (let col = c0; col <= c1; col++) {
           let colour;
-          if (col >= pc0 && col <= pc1 && row >= pr0 && row <= pr1) {
+          if (named && col >= pc0 && col <= pc1 && row >= pr0 && row <= pr1) {
             colour = col === pc0 || col === pc1 || row === pr0 || row === pr1 ? floor.border : -1;
           } else {
             colour = floor.at(col, row);
@@ -441,6 +445,23 @@
       applyTheme();
     });
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+
+    // The Name button takes the name and link off the page, leaving just the paper, and puts them back.
+    const nameBtn = document.getElementById('name');
+    const mainEl = document.querySelector('main');
+    function applyName(on) {
+      mainEl.hidden = !on;
+      nameBtn.textContent = 'Name: ' + (on ? 'on' : 'off');
+      nameBtn.setAttribute('aria-pressed', String(on));
+    }
+    try { applyName(localStorage.getItem('paper-name') !== 'off'); } catch { applyName(true); }
+    nameBtn.addEventListener('click', () => {
+      const on = mainEl.hidden;
+      applyName(on);
+      try { if (on) localStorage.removeItem('paper-name'); else localStorage.setItem('paper-name', 'off'); } catch {}
+      compose();   // a floor's panel comes and goes with the name
+      draw();
+    });
 
     const changed = () => { resetBtn.disabled = scene === null && edits.size === 0; };
     resetBtn.addEventListener('click', () => {
