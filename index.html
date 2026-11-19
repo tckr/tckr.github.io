@@ -1,27 +1,161 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tucker Severson</title>
+  <meta name="description" content="Tucker Severson">
+  <meta name="theme-color" content="#f6f8fb">
+  <link rel="canonical" href="https://tuckerseverson.com/">
+  <link rel="me" href="https://www.linkedin.com/in/tuckerseverson/">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: hidden;
+      /* Off-white paper with the faintest blue tint, a touch deeper towards the edges. */
+      background: radial-gradient(120% 120% at 50% 46%, #f9fafc 0%, #f5f7fb 55%, #eef1f7 100%) fixed;
+      background-color: #f6f8fb;
+      color: #1d1f2b;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #paper {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    main {
+      position: relative;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    a {
+      color: #5a5f78;
+      font-size: 1.0625rem;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+      transition: color 120ms ease;
+    }
+    a:hover, a:focus-visible { color: #1d1f2b; }
+    a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <canvas id="paper" aria-hidden="true"></canvas>
+  <main>
+    <h1>Tucker Severson</h1>
+    <a href="https://www.linkedin.com/in/tuckerseverson/" rel="me noopener">LinkedIn</a>
+  </main>
+  <script>
+  (() => {
+    const canvas = document.getElementById('paper');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    <title>Tucker D Severson</title>
-    <link href="/stylesheets/site.css" rel="stylesheet" />
-    <script src="/javascripts/site.js"></script>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧑🏼‍💻</text></svg>">
-  </head>
-  <body>
-    
+    // Dot grid paper. Click a square to colour it; each further click moves it to
+    // the next colour, and after the last one it goes back to blank.
+    const SIZE = 32;   // px per square
+    const GAP = 4;     // px of paper left around a coloured square
+    const COLORS = ['#6a94e6', '#9d82dc', '#a3a9bb'];  // blue, purple, grey
+    const STORE = 'paper-cells-v1';
 
-<h1>
-👋🏻 <br> Hi, I'm Tucker
-</h1>
+    // Squares are counted from the centre of the window, so a drawing stays put
+    // around the name when the window is resized. Key "col,row" -> index into COLORS.
+    let cells = new Map();
+    try {
+      cells = new Map(Object.entries(JSON.parse(localStorage.getItem(STORE) || '{}')));
+    } catch {}
+    const save = () => {
+      try { localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(cells))); } catch {}
+    };
 
-  <a href="https://twitter.com/tckr">@tckr</a> • 
-  <a href="https://www.linkedin.com/in/tuckerseverson/">in/tuckerseverson</a> • 
-  <a href="https://hypem.com/tckr">hypem</a>
+    let vw = 0, vh = 0, dpr = 1, hover = null;
+    const cellAt = (x, y) => [Math.floor((x - vw / 2) / SIZE), Math.floor((y - vh / 2) / SIZE)];
 
-    
-  </body>
+    function draw() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const ox = vw / 2, oy = vh / 2;
+      // Snap to device pixels so dots and squares stay crisp.
+      const px = (v) => Math.round(v * dpr);
+
+      // A square is filled inside its cell, leaving GAP of paper on every side.
+      const fill = (col, row) => {
+        const x0 = px(ox + col * SIZE + GAP), y0 = px(oy + row * SIZE + GAP);
+        const x1 = px(ox + (col + 1) * SIZE - GAP) + 1, y1 = px(oy + (row + 1) * SIZE - GAP) + 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x0, y0, x1 - x0, y1 - y0, 3 * dpr); else ctx.rect(x0, y0, x1 - x0, y1 - y0);
+        ctx.fill();
+      };
+      for (const [key, c] of cells) {
+        const [col, row] = key.split(',').map(Number);
+        ctx.fillStyle = COLORS[c];
+        fill(col, row);
+      }
+      if (hover) {
+        ctx.fillStyle = 'rgba(40, 50, 95, 0.07)';
+        fill(hover[0], hover[1]);
+      }
+
+      // A dot at every corner where grid lines would cross.
+      ctx.fillStyle = 'rgba(52, 66, 120, 0.26)';
+      const r = Math.max(1, 1.1 * dpr);
+      ctx.beginPath();
+      for (let j = Math.floor(-oy / SIZE); oy + j * SIZE <= vh; j++) {
+        for (let k = Math.floor(-ox / SIZE); ox + k * SIZE <= vw; k++) {
+          const x = px(ox + k * SIZE) + 0.5, y = px(oy + j * SIZE) + 0.5;
+          ctx.moveTo(x + r, y);
+          ctx.arc(x, y, r, 0, 6.2832);
+        }
+      }
+      ctx.fill();
+    }
+
+    function resize() {
+      vw = innerWidth; vh = innerHeight;
+      dpr = Math.min(3, devicePixelRatio || 1);
+      canvas.width = Math.round(vw * dpr);
+      canvas.height = Math.round(vh * dpr);
+      draw();
+    }
+    addEventListener('resize', resize);
+    resize();
+
+    addEventListener('click', (e) => {
+      if (e.target.closest && e.target.closest('a')) return;  // the link is still a link
+      const key = cellAt(e.clientX, e.clientY).join(',');
+      const next = cells.has(key) ? cells.get(key) + 1 : 0;
+      if (next >= COLORS.length) cells.delete(key); else cells.set(key, next);
+      save();
+      draw();
+    });
+
+    // A faint highlight on the square under the mouse.
+    addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const c = cellAt(e.clientX, e.clientY);
+      if (hover && hover[0] === c[0] && hover[1] === c[1]) return;
+      hover = c;
+      draw();
+    }, { passive: true });
+    document.addEventListener('mouseleave', () => { hover = null; draw(); });
+  })();
+  </script>
+</body>
 </html>
