@@ -25,7 +25,9 @@
       color: #1d1f2b;
       font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       -webkit-font-smoothing: antialiased;
-      touch-action: manipulation;
+      touch-action: pinch-zoom;  /* a finger drag draws instead of scrolling */
+      user-select: none;
+      -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     #paper {
@@ -70,7 +72,7 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Dot grid paper. Click a square to colour it; each further click moves it to
+    // Dot grid paper. Click a square to colour it, or drag to colour a run; each further click moves it to
     // the next colour, and after the last one it goes back to blank.
     const SIZE = 32;   // px per square
     const GAP = 4;     // px of paper left around a coloured square
@@ -139,23 +141,48 @@
     addEventListener('resize', resize);
     resize();
 
-    addEventListener('click', (e) => {
+    const setCell = (key, c) => {
+      if ((cells.has(key) ? cells.get(key) : -1) === c) return false;
+      if (c < 0) cells.delete(key); else cells.set(key, c);
+      return true;
+    };
+
+    // Press a square to move it to its next colour (or back to blank). Keep the
+    // button or finger down and drag, and every square you cross takes that same
+    // colour, so one stroke draws a line or rubs one out.
+    let brush = null, lastX = 0, lastY = 0;
+    addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !e.isPrimary) return;
       if (e.target.closest && e.target.closest('a')) return;  // the link is still a link
       const key = cellAt(e.clientX, e.clientY).join(',');
       const next = cells.has(key) ? cells.get(key) + 1 : 0;
-      if (next >= COLORS.length) cells.delete(key); else cells.set(key, next);
-      save();
+      brush = next >= COLORS.length ? -1 : next;
+      setCell(key, brush);
+      lastX = e.clientX; lastY = e.clientY;
       draw();
     });
-
-    // A faint highlight on the square under the mouse.
     addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      const c = cellAt(e.clientX, e.clientY);
-      if (hover && hover[0] === c[0] && hover[1] === c[1]) return;
-      hover = c;
-      draw();
+      let dirty = false;
+      if (brush !== null && e.isPrimary) {
+        // Step along the path in half-square hops, so a fast drag leaves no holes.
+        const n = Math.max(1, Math.ceil(Math.hypot(e.clientX - lastX, e.clientY - lastY) / (SIZE / 2)));
+        for (let s = 1; s <= n; s++) {
+          const key = cellAt(lastX + (e.clientX - lastX) * s / n, lastY + (e.clientY - lastY) * s / n).join(',');
+          if (setCell(key, brush)) dirty = true;
+        }
+        lastX = e.clientX; lastY = e.clientY;
+      }
+      // A faint highlight on the square under the mouse.
+      if (e.pointerType === 'mouse') {
+        const c = cellAt(e.clientX, e.clientY);
+        if (!hover || hover[0] !== c[0] || hover[1] !== c[1]) { hover = c; dirty = true; }
+      }
+      if (dirty) draw();
     }, { passive: true });
+    const lift = () => { if (brush !== null) { brush = null; save(); } };
+    addEventListener('pointerup', lift);
+    addEventListener('pointercancel', lift);
+    addEventListener('blur', lift);
     document.addEventListener('mouseleave', () => { hover = null; draw(); });
   })();
   </script>
