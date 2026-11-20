@@ -23,7 +23,7 @@ Everything is in `index.html`: styles, markup and one script. No dependencies ap
 
 - **Paper:** a canvas draws a dot at every grid corner and a rounded square for each coloured cell. Squares are 18px (12px on screens narrower than 600px) and are counted from the centre of the window.
 - **Drawing:** pressing a square moves it to the next of nine colours, then back to blank. Dragging paints blank squares with the stroke's colour and bumps coloured ones to their next colour.
-- **Scenes:** the Random button takes turns through generated scenes (`SCENES` and `SCENE_ORDER`): a mountain landscape that differs each time, three tiled floors, and a world map. A scene is rebuilt from its kind and seed, so it re-fits when the window is resized.
+- **Scenes:** the Random button takes turns through generated scenes (`SCENES` and `SCENE_ORDER`): a mountain landscape that differs each time, three tiled floors, a world map, and a mosaic mountain lake (sky bands, two ranges, pale reflection, dark pines). A scene is rebuilt from its kind and seed, so it re-fits when the window is resized.
 - **Saved in the visitor's browser** (`localStorage`): the current scene and their own edits on top of it (`paper-v5`), the theme choice (`paper-theme`), and whether the name is hidden (`paper-name`). Change the storage key if the format changes.
 - **Background:** the soft gradient, dot strength and grid size were tuned by Tucker in a separate playground. Ask before changing them; apply new settings exactly as given.
 - **Theme:** follows the system by default; colours are CSS variables defined for light and dark.
