@@ -31,7 +31,7 @@ Everything is in `index.html`: styles, markup and one script. No dependencies ap
 
 ## Link previews
 
-- `preview.png` (1200×630) is what Messages, Slack and others show for a shared link. `apple-touch-icon.png` (180px) and `favicon.png` (64px) are the icons. The tags are in the page's `<head>`.
+- `preview.png` (1200×630) is what Messages, Slack and others show for a shared link. `apple-touch-icon.png` (180px, the detailed tile mountain) is the home-screen icon. `favicon.svg` and `favicon.ico` (16/32/48px) are a simpler 3×3 tile mountain that stays legible in a browser tab; don't replace them with a scaled-down copy of the big one. The tags are in the page's `<head>`.
 - The preview is a picture of the real page taken with headless Chrome: light theme, a mountain scene, the name placed higher, the link and buttons hidden, at an 800×420 window and 1.5× scale. Remake it if the page's look changes much.
 - Apps cache previews. Test a change with a fresh address such as `https://tuckerseverson.com/?v=2`.
 
